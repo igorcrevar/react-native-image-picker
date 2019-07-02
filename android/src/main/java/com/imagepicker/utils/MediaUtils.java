@@ -38,12 +38,13 @@ import static com.imagepicker.ImagePickerModule.REQUEST_LAUNCH_IMAGE_CAPTURE;
 public class MediaUtils
 {
     public static @Nullable File createNewFile(@NonNull final Context reactContext,
+                                               String originalExtension,
                                                @NonNull final ReadableMap options,
                                                @NonNull final boolean forceLocal)
     {
         final String filename = new StringBuilder("image-")
                 .append(UUID.randomUUID().toString())
-                .append(".jpg")
+                .append('.').append(originalExtension != null && originalExtension != "" ? originalExtension : "jpg")
                 .toString();
 
         final File path = ReadableMapUtils.hasAndNotNullReadableMap(options, "storageOptions")
@@ -83,6 +84,7 @@ public class MediaUtils
                                                        @NonNull final ImageConfig imageConfig,
                                                        int initialWidth,
                                                        int initialHeight,
+                                                       String originalExtension,
                                                        final int requestCode)
     {
         BitmapFactory.Options imageOptions = new BitmapFactory.Options();
@@ -155,10 +157,17 @@ public class MediaUtils
 
         scaledPhoto = Bitmap.createBitmap(photo, 0, 0, photo.getWidth(), photo.getHeight(), matrix, true);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        scaledPhoto.compress(Bitmap.CompressFormat.JPEG, result.quality, bytes);
+
+        if ("png".equalsIgnoreCase(originalExtension)) {
+            scaledPhoto.compress(Bitmap.CompressFormat.PNG, result.quality, bytes);
+        }
+        else {
+            scaledPhoto.compress(Bitmap.CompressFormat.JPEG, result.quality, bytes);
+        }
+
 
         final boolean forceLocal = requestCode == REQUEST_LAUNCH_IMAGE_CAPTURE;
-        final File resized = createNewFile(context, options, !forceLocal);
+        final File resized = createNewFile(context, originalExtension, options, !forceLocal);
 
         if (resized == null)
         {
